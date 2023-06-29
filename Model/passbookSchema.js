@@ -1,19 +1,39 @@
+/* eslint-disable semi */
+/* eslint-disable comma-dangle */
 const mongoose = require('mongoose')
 
 const passbookSchema = new mongoose.Schema(
   {
-    iUser: {
+    iUserId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'users',
-      require: true,
+      required: true,
     },
-    // nAmount: { type: Number, require: true },
+
+    nTotalBalance: {
+      type: Number,
+      default: 0,
+    },
+
     nAmount: {
       type: Number,
-
+      default: 0,
     },
-    
-    sDescription: String
+
+    eStatus: {
+      type: String,
+      default: 'S',
+    },
+
+    eTransactionType: {
+      type: String,
+      enum: ['deposit', 'win', 'withdraw', 'tds'],
+    },
+
+    nDepositBalance: {
+      type: Number,
+      default: 0,
+    },
   },
 
   { timestamps: true }

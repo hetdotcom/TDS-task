@@ -1,0 +1,32 @@
+Hello @all trainees, here's your task
+
+Task Name: TDS Calculation (Level 1)
+You need calculate TDS for one user only
+- User schema decide yourself make it minimal
+
+- Passbook fields : [ iUserId, nTotalBalance, nAmount, eStatus(default:'S'), eTransactionType,nDepositBalanace, dCreatedAt, dUpdatedAt]
+
+- Withdraw fields: [iUserId, nAmount, eStatus, dCreatedAt, dUpdatedAt]
+
+- TDS fields: [iUserId, nAmount, nOriginalAmount,nPercentage,eStatus]
+
+
+Task: 
+Make Entry of Win in Passbook for last month (26/05/2023)
+Make Entry of Win in Passbook Rs. 10000 for This Month  in between (01/06/2023-30/06/2023)
+Make Entry of deposit in Passbook for 28/05/2023
+Make Entry of withdrawal of 7000 for 30/05/2023 and passbook entry for the same
+Make Win Entry for date 30/05/2023 in which 2000 as totalbalance
+
+Make a function for withdrawal request of Rs.5000  for date  (01/06/2023-30/06/2023) and calculates TDS based on that using the following formula.
+
+Taxable Amount = A - B - C - D
+
+A : PastTotalWithdraw of this month + Requested Withdraw Amount
+B : Total Deposit of this month
+C: Opening Balance of this month (means last month last entry of balance)
+D: Total Amount on which we deducted TDS in this Month 
+
+Make Entry of Tds after calculating Taxable Amount
+Make Withdraw entry after deducting Tds from requested amount
+Make Passbook entries for the same 
