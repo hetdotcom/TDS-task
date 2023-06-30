@@ -19,9 +19,10 @@ const messages = {
   notFound: { sMessage: 'Data not found, Enter valid URL!!' },
 
   moneyAdded: { sMessage: 'money added successfully!!' },
+  moneyWithdrawn: { sMessage: 'money withdrawn successfully!!' },
   moneyNotAdded: { sMessage: 'money not added, Internal Server Error' },
 
-  invallidTransactionType: {
+  invalidTransactionType: {
     sMessage: 'Enter Valid Transaction type',
   },
 }

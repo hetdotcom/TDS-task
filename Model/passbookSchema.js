@@ -27,7 +27,7 @@ const passbookSchema = new mongoose.Schema(
 
     eTransactionType: {
       type: String,
-      enum: ['deposit', 'win', 'withdraw', 'tds'],
+      enum: ['deposit', 'win', 'withdraw', 'tds', 'creation   '],
     },
 
     nDepositBalance: {

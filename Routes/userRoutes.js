@@ -5,7 +5,7 @@ const router = express.Router()
 
 const {
   addUser,
-} = require('../Controller/userController')
+} = require('../Controller/controller')
 
 router.post('/add-user', addUser)
 
