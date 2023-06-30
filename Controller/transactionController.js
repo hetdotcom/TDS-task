@@ -272,67 +272,67 @@ const tdsCount = async (req, res) => {
     const nTDS = nTaxableAmount * nPercentage
     console.log('nTDS', nTDS)
 
-    // ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
 
-    // const nTdsAmount = nAmount * nPercentage
-    // // const nPayableAmount = nAmount - nAmount * nPercentage
-    // const nOriginalAmount = nAmount - nTDS
-    // const tdsEntry = {
-    //   iUserId: iUserId,
-    //   nAmount: nTdsAmount,
-    //   nOriginalAmount: nTaxableAmount,
-    //   nPercentage: nPercentage,
-    // }
-    // // console.log(tdsEntry, 228)
-    // await TDS.create([tdsEntry], { session: session })
+    const nTdsAmount = nAmount * nPercentage
+    // const nPayableAmount = nAmount - nAmount * nPercentage
+    const nOriginalAmount = nAmount - nTDS
+    const tdsEntry = {
+      iUserId: iUserId,
+      nAmount: nTdsAmount,
+      nOriginalAmount: nTaxableAmount,
+      nPercentage: nPercentage,
+    }
+    // console.log(tdsEntry, 228)
+    await TDS.create([tdsEntry], { session: session })
 
-    // const withdrawEntry = {
-    //   iUserId: iUserId,
-    //   nAmount: nOriginalAmount,
-    // }
-    // // console.log(withdrawEntry, 235)
-    // await Withdraw.create([withdrawEntry], { session: session })
+    const withdrawEntry = {
+      iUserId: iUserId,
+      nAmount: nOriginalAmount,
+    }
+    // console.log(withdrawEntry, 235)
+    await Withdraw.create([withdrawEntry], { session: session })
 
-    // const isUserPresent = await Passbook.findOne(
-    //   { iUserId: iUserId },
-    //   {},
-    //   { session: session }
-    // )
-    // if (isUserPresent) {
-    //   let oUser = await Passbook.find(
-    //     { iUserId: iUserId },
-    //     {},
-    //     { session: session }
-    //   ).sort({ createdAt: -1 })
+    const isUserPresent = await Passbook.findOne(
+      { iUserId: iUserId },
+      {},
+      { session: session }
+    )
+    if (isUserPresent) {
+      let oUser = await Passbook.find(
+        { iUserId: iUserId },
+        {},
+        { session: session }
+      ).sort({ createdAt: -1 })
 
-    //   const oWithdrawPassbook = {
-    //     iUserId: iUserId,
-    //     nTotalBalance: oUser[0].nTotalBalance - nOriginalAmount,
-    //     nAmount: nOriginalAmount,
-    //     eTransactionType: 'withdraw',
-    //     nDepositBalance: oUser[0].nDepositBalance,
-    //   }
-    //   // console.log(oWithdrawPassbook, 249)
-    //   await Passbook.create(oWithdrawPassbook)
+      const oWithdrawPassbook = {
+        iUserId: iUserId,
+        nTotalBalance: oUser[0].nTotalBalance - nOriginalAmount,
+        nAmount: nOriginalAmount,
+        eTransactionType: 'withdraw',
+        nDepositBalance: oUser[0].nDepositBalance,
+      }
+      // console.log(oWithdrawPassbook, 249)
+      await Passbook.create(oWithdrawPassbook)
 
-    //   oUser = await Passbook.find({ iUserId: iUserId }).sort({
-    //     createdAt: -1,
-    //   })
-    //   // console.log(oUser)
-    //   const oTdsPassbook = {
-    //     iUserId: iUserId,
-    //     nTotalBalance: oUser[0].nTotalBalance - nTdsAmount,
-    //     nAmount: nTdsAmount,
-    //     eTransactionType: 'tds',
-    //     nDepositBalance: oUser[0].nDepositBalance,
-    //   }
-    //   // console.log(oTdsPassbook, 257)
-    //   await Passbook.create(oTdsPassbook)
-    // } else {
-    //   return res
-    //     .status(messages.status.badrequest)
-    //     .json(messages.messages.userNotPresent)
-    // }
+      oUser = await Passbook.find({ iUserId: iUserId }).sort({
+        createdAt: -1,
+      })
+      // console.log(oUser)
+      const oTdsPassbook = {
+        iUserId: iUserId,
+        nTotalBalance: oUser[0].nTotalBalance - nTdsAmount,
+        nAmount: nTdsAmount,
+        eTransactionType: 'tds',
+        nDepositBalance: oUser[0].nDepositBalance,
+      }
+      // console.log(oTdsPassbook, 257)
+      await Passbook.create(oTdsPassbook)
+    } else {
+      return res
+        .status(messages.status.badrequest)
+        .json(messages.messages.userNotPresent)
+    }
 
     await session.commitTransaction()
 
