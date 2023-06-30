@@ -20,7 +20,7 @@ const addMoney = async (req, res) => {
     const oUser = await Passbook.find({ iUserId: iUserId }).sort({
       createdAt: -1,
     })
-    console.log(oUser[0])
+    console.log(oUser[0], 'passbook')
     if (oUser) {
       if (eTransactionType === 'win') {
         oUser[0].nTotalBalance += nAmount
@@ -121,14 +121,14 @@ const tdsCount = async (req, res) => {
         {
           $match: {
             createdAt: {
-              $gt: dFirstDate,
-              $lt: dLastDate,
+              $gt: new Date(dFirstDate),
+              $lt: new Date(dLastDate),
             },
           },
         },
         {
           $group: {
-            _id: '$eTransactionType', // {eTra: '$eTransactionType',id: '$iUserId'} for more user
+            _id: { eTransaction: '$eTransactionType', Uid: '$iUserId' },
             nTotalWithdraw: {
               $sum: '$nAmount',
             },
@@ -136,35 +136,43 @@ const tdsCount = async (req, res) => {
         },
         {
           $match: {
-            _id: 'withdraw',
+            $or: [
+              { '_id.eTransaction': 'withdraw' },
+              { '_id.eTransaction': 'tds' },
+            ],
           },
         },
       ],
       { session: session }
     )
-
+    console.log(nTotalWithdraw, 'withdraw')
     let A = 0
     if (nTotalWithdraw.length) {
-      A = nTotalWithdraw[0].nTotalWithdraw + nAmount
+      nTotalWithdraw.forEach((element) => {
+        A += element.nTotalWithdraw
+      })
+      A = A + nAmount
       console.log('A', A)
     } else {
       A = nAmount
-      console.log('A', A)
+      console.log('!A', A)
     }
 
+    // const oData = await Passbook.find()
+    // console.log(oData);
     const nTotalDeposit = await Passbook.aggregate(
       [
         {
           $match: {
             createdAt: {
-              $gt: dFirstDate,
-              $lt: dLastDate,
+              $gt: new Date(dFirstDate),
+              $lt: new Date(dLastDate),
             },
           },
         },
         {
           $group: {
-            _id: '$eTransactionType',
+            _id: { eTransaction: '$eTransactionType', Uid: '$iUserId' },
             nTotalDeposit: {
               $sum: '$nAmount',
             },
@@ -172,7 +180,7 @@ const tdsCount = async (req, res) => {
         },
         {
           $match: {
-            _id: 'deposit',
+            '_id.eTransaction': 'deposit',
           },
         },
       ],
@@ -182,49 +190,59 @@ const tdsCount = async (req, res) => {
     // const B = nTotalDeposit[0].nTotalDeposit
     // console.log('B', B)
     let B = 0
-    if (nTotalWithdraw.length) {
+    if (nTotalDeposit.length) {
       B = nTotalDeposit[0].nTotalDeposit
       console.log('B', B)
     } else {
-      console.log('B', 'B!')
+      console.log('!B', B)
     }
 
-    const aMonthData = await Passbook.find(
-      {
-        createdAt: {
-          $gt: dFirstDate,
-          $lt: dLastDate,
-        },
-      },
-      {},
-      { session }
-    ).sort({ createdAt: -1 })
+    // const aMonthData = await Passbook.find(
+    //   {
+    //     createdAt: {
+    //       $gt: dFirstDate,
+    //       $lt: dLastDate,
+    //     },
+    //   },
+    //   {},
+    //   { session }
+    // ).sort({ createdAt: -1 })
     // const aMonthData = await Passbook.find({
     //   createdAt: {
     //     $gt: dFirstDate,
     //     $lt: dLastDate,
     //   },
     // }).sort({ createdAt: -1 })
-    const currentMonth = new Date(dLastDate).getMonth()
-    console.log(currentMonth, 'date')
 
-    const C = aMonthData[0].nTotalBalance
-    console.log('C', C)
-    // console.log(C);
+    const oOpeningBalance = await Passbook.find(
+      {
+        createdAt: { $lt: dFirstDate },
+      },
+      {},
+      { session }
+    ).sort({ createdAt: -1 })
+    let C = 0
+    console.log(oOpeningBalance)
+    if (oOpeningBalance.length) {
+      C = oOpeningBalance[0].nTotalBalance
+      console.log('C', C)
+    } else {
+      console.log('!C', C)
+    }
 
     const nTotalTds = await Passbook.aggregate(
       [
         {
           $match: {
             createdAt: {
-              $gt: dFirstDate,
-              $lt: dLastDate,
+              $gt: new Date(dFirstDate),
+              $lt: new Date(dLastDate),
             },
           },
         },
         {
           $group: {
-            _id: '$eTransactionType',
+            _id: { eTransaction: '$eTransactionType', Uid: '$iUserId' },
             nTotalTds: {
               $sum: '$nAmount',
             },
@@ -232,82 +250,89 @@ const tdsCount = async (req, res) => {
         },
         {
           $match: {
-            _id: 'tds',
+            '_id.eTransaction': 'withdraw',
           },
         },
       ],
       { session: session }
     )
+    console.log(nTotalTds)
     // const D = nTotalTds[0].nTotalTds * nPercentage
     let D = 0
-    if (nTotalWithdraw.length) {
+    if (nTotalTds.length) {
       D = nTotalTds[0].nTotalTds * nPercentage
-      console.log('B', D)
+      console.log('D', D)
     } else {
-      console.log('B', D)
+      console.log('!D', D)
     }
 
-    const nTDS = A - B - C - D
+    const nTaxableAmount = A - B - C - D
+    console.log('nTaxableAmount', nTaxableAmount)
+
+    const nTDS = nTaxableAmount * nPercentage
     console.log('nTDS', nTDS)
 
-    // const nTdsAmount = nAmount * nPercentage
-    // const nOriginalAmount = nAmount - nAmount * nPercentage
-    // const tdsEntry = {
-    //   iUserId: iUserId,
-    //   nAmount: nTdsAmount,
-    //   nOriginalAmount: nOriginalAmount,
-    //   nPercentage: nPercentage,
-    // }
-    // // console.log(tdsEntry, 228)
-    // await TDS.create([tdsEntry], { session: session })
+    // ////////////////////////////////////////////////////////////////////////
 
-    // const withdrawEntry = {
-    //   iUserId: iUserId,
-    //   nAmount: nAmount,
-    // }
-    // // console.log(withdrawEntry, 235)
-    // await Withdraw.create([withdrawEntry], { session: session })
+    const nTdsAmount = nAmount * nPercentage
+    const nPayableAmount = nAmount - nAmount * nPercentage
+    const nOriginalAmount = nAmount - nTDS
+    const tdsEntry = {
+      iUserId: iUserId,
+      nAmount: nTdsAmount,
+      nOriginalAmount: nPayableAmount,
+      nPercentage: nPercentage,
+    }
+    // console.log(tdsEntry, 228)
+    await TDS.create([tdsEntry], { session: session })
 
-    // const isUserPresent = await Passbook.findOne(
-    //   { iUserId: iUserId },
-    //   {},
-    //   { session: session }
-    // )
-    // if (isUserPresent) {
-    //   let oUser = await Passbook.find(
-    //     { iUserId: iUserId },
-    //     {},
-    //     { session: session }
-    //   ).sort({ createdAt: -1 })
-      
-    //   const oWithdrawPassbook = {
-    //     iUserId: iUserId,
-    //     nTotalBalance: oUser[0].nTotalBalance - nOriginalAmount,
-    //     nAmount: nOriginalAmount,
-    //     eTransactionType: 'withdraw',
-    //     nDepositBalance: oUser[0].nDepositBalance,
-    //   }
-    //   // console.log(oWithdrawPassbook, 249)
-    //   await Passbook.create(oWithdrawPassbook)
+    const withdrawEntry = {
+      iUserId: iUserId,
+      nAmount: nOriginalAmount,
+    }
+    // console.log(withdrawEntry, 235)
+    await Withdraw.create([withdrawEntry], { session: session })
 
-    //   oUser = await Passbook.find({ iUserId: iUserId }).sort({
-    //     createdAt: -1,
-    //   })
-    //   // console.log(oUser)
-    //   const oTdsPassbook = {
-    //     iUserId: iUserId,
-    //     nTotalBalance: oUser[0].nTotalBalance - nTdsAmount,
-    //     nAmount: nTdsAmount,
-    //     eTransactionType: 'tds',
-    //     nDepositBalance: oUser[0].nDepositBalance,
-    //   }
-    //   // console.log(oTdsPassbook, 257)
-    //   await Passbook.create(oTdsPassbook)
-    // } else {
-    //   return res
-    //     .status(messages.status.badrequest)
-    //     .json(messages.messages.userNotPresent)
-    // }
+    const isUserPresent = await Passbook.findOne(
+      { iUserId: iUserId },
+      {},
+      { session: session }
+    )
+    if (isUserPresent) {
+      let oUser = await Passbook.find(
+        { iUserId: iUserId },
+        {},
+        { session: session }
+      ).sort({ createdAt: -1 })
+
+      const oWithdrawPassbook = {
+        iUserId: iUserId,
+        nTotalBalance: oUser[0].nTotalBalance - nOriginalAmount,
+        nAmount: nOriginalAmount,
+        eTransactionType: 'withdraw',
+        nDepositBalance: oUser[0].nDepositBalance,
+      }
+      // console.log(oWithdrawPassbook, 249)
+      await Passbook.create(oWithdrawPassbook)
+
+      oUser = await Passbook.find({ iUserId: iUserId }).sort({
+        createdAt: -1,
+      })
+      // console.log(oUser)
+      const oTdsPassbook = {
+        iUserId: iUserId,
+        nTotalBalance: oUser[0].nTotalBalance - nTdsAmount,
+        nAmount: nTdsAmount,
+        eTransactionType: 'tds',
+        nDepositBalance: oUser[0].nDepositBalance,
+      }
+      // console.log(oTdsPassbook, 257)
+      await Passbook.create(oTdsPassbook)
+    } else {
+      return res
+        .status(messages.status.badrequest)
+        .json(messages.messages.userNotPresent)
+    }
 
     await session.commitTransaction()
 
